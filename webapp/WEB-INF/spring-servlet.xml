@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns:aop="http://www.springframework.org/schema/aop"
+		xmlns="http://www.springframework.org/schema/beans"
+		xmlns:p="http://www.springframework.org/schema/p"
+		xmlns:context="http://www.springframework.org/schema/context"
+		xsi:schemaLocation="http://www.springframework.org/schema/mvc
+			http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+			http://www.springframework.org/schema/aop
+			http://www.springframework.org/schema/aop/spring-aop.xsd
+			http://www.springframework.org/schema/beans
+			http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+			http://www.springframework.org/schema/context
+			http://www.springframework.org/schema/context/spring-context-4.2.xsd"
+		xmlns:mvc="http://www.springframework.org/schema/mvc">
+	
+	<aop:aspectj-autoproxy/>
+	
+	<mvc:default-servlet-handler/>
+	
+	<mvc:annotation-driven>
+		<mvc:message-converters>
+			<bean class="org.springframework.http.converter.StringHttpMessageConverter">
+			   <property name="supportedMediaTypes">
+			   		<list>
+			   			<value>text/html; charset=UTF-8</value>
+			   		</list>
+			   </property>
+			</bean>
+			<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+				<property name="supportedMediaTypes">
+					<list>
+						<value>application/json; charset=UTF-8</value>
+					</list>
+				</property>				
+			</bean>
+		</mvc:message-converters>
+
+	    <!-- argument resolver -->
+	    <mvc:argument-resolvers>
+			<bean class="com.hanains.mysite.annotation.AuthUserHandlerMethodArgumentResolver"/>           
+	    </mvc:argument-resolvers>
+		
+	</mvc:annotation-driven>
+	
+	<mvc:resources mapping="/profile-images/**" location="file:/temp/" />
+	<context:annotation-config/>
+	<context:component-scan base-package="com.hanains.mysite"/>
+	
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+		<property name="prefix" value="/WEB-INF/views/"/>
+		<property name="suffix" value=".jsp"/>
+		<property name="order" value="1"/>
+	</bean>
+	
+	<!-- 멀티파트 리졸버 파일업로드처리2 -->
+	<bean id="multipartResolver" 
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- 최대업로드 가능한 바이트크기 -->
+		<property name="maxUploadSize" value="52428800" />
+		<!-- 디스크에 임시 파일을 생성하기 전에 메모리에 보관할수있는 최대 바이트 크기 -->
+		<!-- property name="maxInMemorySize" value="52428800" /-->
+		<!-- defaultEncoding -->
+		<property name="defaultEncoding" value="utf-8" />
+	</bean>	
+	
+	<!-- Interceptors -->
+    <mvc:interceptors>
+    	<!--  선행되어야될 순서부터 진행 -->
+    	<mvc:interceptor>        	
+        	<mvc:mapping path="/user/login"/> 
+    		<bean class="com.hanains.mysite.interceptor.AuthLoginInterceptor" />
+        </mvc:interceptor>
+    
+    	<mvc:interceptor>        	
+        	<mvc:mapping path="/user/logout"/> 
+    		<bean class="com.hanains.mysite.interceptor.AuthLogoutInterceptor" />
+        </mvc:interceptor>    
+    
+    	<mvc:interceptor>    
+        	<mvc:mapping path="/board/**"/>        	
+    		<bean class="com.hanains.mysite.interceptor.MyInterceptor" />
+        </mvc:interceptor>
+        
+        <mvc:interceptor>        	
+        	<mvc:mapping path="/user/**"/> 
+    		<bean class="com.hanains.mysite.interceptor.MyInterceptor2" />
+        </mvc:interceptor>
+        
+        <mvc:interceptor>        	
+        	<mvc:mapping path="/**"/> 
+        	<mvc:exclude-mapping path="/assets/**" />
+        	<!--  어노테이션을 확인하기 위해 모든경로에 대해 수행 위험한건 이미지랑 css 등 까지도 다들어올 수 있는데  이때 문제임 -
+        	 그때 발생할 수 있는 문제는 걔네들의 핸들러는 핸들러 메서드가 아니다. 이미지는 디펄트 서블릿 핸들러 메서드 그때 에러가 발생함 따라서 핸들러를 걸러주어야함.-->
+    	<bean class="com.hanains.mysite.interceptor.AuthInterceptor" />
+        </mvc:interceptor>
+        
+        
+    </mvc:interceptors>
+	
+
+
+	
+	
+</beans>

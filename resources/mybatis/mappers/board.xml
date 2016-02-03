@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="board">
+
+	<select id="getList"
+			resultType="BoardVo"
+			parameterType="map">
+		
+			
+		<![CDATA[
+			select * from (
+				select no, 
+				title, 
+				member_no as memberNo, 
+				member_name as memberName, 
+				view_cnt as viewCount, 
+				reg_date as regDate, 
+				lvl, 
+				rownum as r 
+				from (
+					select 
+					a.no, 
+					a.title, 
+					a.member_no, 
+					b.name as member_name, 
+					a.view_cnt, 
+					to_char(a.reg_date,'yyyy-mm-dd hh:MM:ss') as reg_date,
+				    a.lvl, 
+					rownum as rnum 
+					from board a, member b 
+					where a.member_no = b.no 
+					]]>	
+					<if test="kwd != null">					
+						<![CDATA[ 
+						and ${category} like '%${kwd}%'
+						]]>
+					</if> 
+					<![CDATA[ 
+					order by a.grp_no desc, seq_no
+					)
+				)
+				
+			where			
+			r between #{begin} and #{end}
+		]]>
+	</select>
+	
+	<select id="getLength"
+			resultType="Long"
+			parameterType="map">
+		<![CDATA[
+			select count(*)
+			from (
+				select 
+				a.no, 
+				a.title, 
+				a.member_no, 
+				b.name as member_name, 
+				a.view_cnt, 
+				to_char(a.reg_date,'yyyy-mm-dd hh:MM:ss'),
+				a.lvl 
+				from board a, member b 
+				where a.member_no = b.no 
+				]]>	
+				<if test="kwd != null">					
+					<![CDATA[ 
+					and ${category} like '%${kwd}%'
+					]]>
+				</if> 
+				<![CDATA[ 
+			)		
+		]]>
+	</select>	
+	
+	<select id="getByNo"
+			resultType="BoardVo"
+			parameterType="Long">
+		<![CDATA[
+			select 
+			no, 
+			title, 
+			content, 
+			member_no as memberNo, 
+			grp_no, 
+			seq_no, 
+			lvl
+			from board
+			where no=#{no}
+		]]>	
+	</select>
+	
+	<insert id="insert"
+			parameterType="BoardVo">
+		<![CDATA[
+			insert 
+			into board values ( 
+				board_no_seq.nextval, 
+				#{title}, 
+				#{content}, 
+				#{memberNo}, 
+				0, 
+				SYSDATE, 
+				board_no_seq.currval, 
+				1, 
+				0 
+			)
+		
+		]]>
+					
+	</insert>
+	<update id="update"
+			parameterType="BoardVo">
+		<![CDATA[
+			update 
+			board
+			set title=#{title},
+			content=#{content}
+			where no=#{no}		
+		]]>
+	</update>
+	
+	<update id="replyUpdate"
+			parameterType="BoardVo">
+		<![CDATA[
+			update 
+			board 
+			set 
+			seq_no = seq_no + 1 
+			where 
+			grp_no=#{grp_no} and seq_no>#{seq_no}
+		]]>
+	</update>
+	
+	<insert id="replyInsert"
+			parameterType="BoardVo">
+		<![CDATA[
+			insert
+			into
+			board
+			values(
+				board_no_seq.nextval,
+				#{title},
+				#{content},
+				#{memberNo},
+				0,
+				SYSDATE,
+				#{grp_no},
+				#{seq_no}+1,
+				#{lvl}+1
+			)	
+		]]>
+	</insert>
+	
+	<delete id="delete"
+			parameterType="Long">
+		<![CDATA[
+			delete 
+			from 
+			board 
+			where 
+			no = #{no}
+		]]>
+					
+	</delete>
+</mapper>
